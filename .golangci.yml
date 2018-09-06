@@ -6,6 +6,8 @@ run:
 issues:
   max-per-linter: 999999
   max-same: 999999
+  exclude:
+    - composite literal uses unkeyed fields
 
 linters-settings:
   errcheck:
@@ -42,9 +44,9 @@ linters:
     - gocyclo
     - nakedret
     - lll
+    - govet
   disable:
     - errcheck
-    - govet
     - golint
     - megacheck
     - goimports
