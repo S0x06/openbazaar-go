@@ -273,13 +273,12 @@ func migration009MigrateListingsIndexUp(repoPath string) error {
 	}
 
 	var (
-		err             error
-		paymentCoin     string
-		listingJSON     []byte
-		listingsJSON    []byte
-		listingRecord   Migration009_listing
-		listingRecords  []Migration009_listingDataBeforeMigration
-		migratedRecords []Migration009_listingDataAfterMigration
+		err            error
+		paymentCoin    string
+		listingJSON    []byte
+		listingsJSON   []byte
+		listingRecord  Migration009_listing
+		listingRecords []Migration009_listingDataBeforeMigration
 	)
 
 	listingsJSON, err = ioutil.ReadFile(listingsFilePath)
@@ -290,7 +289,8 @@ func migration009MigrateListingsIndexUp(repoPath string) error {
 		return err
 	}
 
-	for _, listing := range listingRecords {
+	migratedRecords := make([]Migration009_listingDataAfterMigration, len(listingRecords))
+	for i, listing := range listingRecords {
 		if paymentCoin == "" {
 			listingFilePath := path.Join(repoPath, "root", "listings", listing.Slug+".json")
 			listingJSON, err = ioutil.ReadFile(listingFilePath)
@@ -303,7 +303,7 @@ func migration009MigrateListingsIndexUp(repoPath string) error {
 			paymentCoin = listingRecord.Listing.Metadata.AcceptedCurrencies[0]
 		}
 
-		migratedRecords = append(migratedRecords, Migration009_listingDataAfterMigration{
+		migratedRecords[i] = Migration009_listingDataAfterMigration{
 			Hash:               listing.Hash,
 			Slug:               listing.Slug,
 			Title:              listing.Title,
@@ -320,7 +320,7 @@ func migration009MigrateListingsIndexUp(repoPath string) error {
 			RatingCount:        listing.RatingCount,
 			CoinType:           listing.CoinType,
 			AcceptedCurrencies: []string{paymentCoin},
-		})
+		}
 	}
 	if listingsJSON, err = json.MarshalIndent(migratedRecords, "", "    "); err != nil {
 		return err
@@ -341,10 +341,9 @@ func migration009MigrateListingsIndexDown(repoPath string) error {
 	}
 
 	var (
-		err             error
-		listingsJSON    []byte
-		listingRecords  []Migration009_listingDataAfterMigration
-		migratedRecords []Migration009_listingDataBeforeMigration
+		err            error
+		listingsJSON   []byte
+		listingRecords []Migration009_listingDataAfterMigration
 	)
 
 	listingsJSON, err = ioutil.ReadFile(listingsFilePath)
@@ -355,8 +354,9 @@ func migration009MigrateListingsIndexDown(repoPath string) error {
 		return err
 	}
 
-	for _, listing := range listingRecords {
-		migratedRecords = append(migratedRecords, Migration009_listingDataBeforeMigration{
+	migratedRecords := make([]Migration009_listingDataBeforeMigration, len(listingRecords))
+	for i, listing := range listingRecords {
+		migratedRecords[i] = Migration009_listingDataBeforeMigration{
 			Hash:          listing.Hash,
 			Slug:          listing.Slug,
 			Title:         listing.Title,
@@ -372,7 +372,7 @@ func migration009MigrateListingsIndexDown(repoPath string) error {
 			AverageRating: listing.AverageRating,
 			RatingCount:   listing.RatingCount,
 			CoinType:      listing.CoinType,
-		})
+		}
 	}
 	if listingsJSON, err = json.MarshalIndent(migratedRecords, "", "    "); err != nil {
 		return err

@@ -52,9 +52,9 @@ func parseSearchTerms(q url.Values) (orderStates []pb.OrderState, searchTerm str
 }
 
 func convertOrderStates(states []int) []pb.OrderState {
-	var orderStates []pb.OrderState
-	for _, i := range states {
-		orderStates = append(orderStates, pb.OrderState(i))
+	orderStates := make([]pb.OrderState, len(states))
+	for i, state := range states {
+		orderStates[i] = pb.OrderState(state)
 	}
 	return orderStates
 }

@@ -69,15 +69,14 @@ func (n *OpenBazaarNode) OpenDispute(orderID string, contract *pb.RicardianContr
 	dispute.Claim = claim
 
 	// Create outpoints
-	var outpoints []*pb.Outpoint
-	for _, r := range records {
-		o := new(pb.Outpoint)
-		o.Hash = r.Txid
-		o.Index = r.Index
-		o.Value = uint64(r.Value)
-		outpoints = append(outpoints, o)
+	dispute.Outpoints = make([]*pb.Outpoint, len(records))
+	for i, r := range records {
+		dispute.Outpoints[i] = &pb.Outpoint{
+			Hash:  r.Txid,
+			Index: r.Index,
+			Value: uint64(r.Value),
+		}
 	}
-	dispute.Outpoints = outpoints
 
 	// Add payout address
 	dispute.PayoutAddress = n.Wallet.CurrentAddress(wallet.EXTERNAL).EncodeAddress()
@@ -548,18 +547,17 @@ func (n *OpenBazaarNode) CloseDispute(orderID string, buyerPercentage, vendorPer
 	}
 
 	// Create inputs
-	var inputs []wallet.TransactionInput
+	inputs := make([]wallet.TransactionInput, 0, len(outpoints))
 	for _, o := range outpoints {
 		decodedHash, err := hex.DecodeString(o.Hash)
 		if err != nil {
 			return err
 		}
-		input := wallet.TransactionInput{
+		inputs = append(inputs, wallet.TransactionInput{
 			OutpointHash:  decodedHash,
 			OutpointIndex: o.Index,
 			Value:         int64(o.Value),
-		}
-		inputs = append(inputs, input)
+		})
 	}
 
 	if len(inputs) == 0 {
@@ -633,12 +631,12 @@ func (n *OpenBazaarNode) CloseDispute(orderID string, buyerPercentage, vendorPer
 	if err != nil {
 		return err
 	}
-	var bitcoinSigs []*pb.BitcoinSignature
-	for _, sig := range sigs {
-		s := new(pb.BitcoinSignature)
-		s.InputIndex = sig.InputIndex
-		s.Signature = sig.Signature
-		bitcoinSigs = append(bitcoinSigs, s)
+	bitcoinSigs := make([]*pb.BitcoinSignature, len(sigs))
+	for i, sig := range sigs {
+		bitcoinSigs[i] = &pb.BitcoinSignature{
+			InputIndex: sig.InputIndex,
+			Signature:  sig.Signature,
+		}
 	}
 
 	// Create payout object
@@ -748,9 +746,9 @@ func (n *OpenBazaarNode) ValidateCaseContract(contract *pb.RicardianContract) []
 	}
 
 	// There needs to be one listing for each unique item in the order
-	var listingHashes []string
-	for _, item := range contract.BuyerOrder.Items {
-		listingHashes = append(listingHashes, item.ListingHash)
+	listingHashes := make([]string, len(contract.BuyerOrder.Items))
+	for i, item := range contract.BuyerOrder.Items {
+		listingHashes[i] = item.ListingHash
 	}
 	for _, listing := range contract.VendorListings {
 		ser, err := proto.Marshal(listing)
@@ -966,18 +964,18 @@ func (n *OpenBazaarNode) verifySignatureOnDisputeResolution(contract *pb.Ricardi
 // ReleaseFunds - release funds
 func (n *OpenBazaarNode) ReleaseFunds(contract *pb.RicardianContract, records []*wallet.TransactionRecord) error {
 	// Create inputs
-	var inputs []wallet.TransactionInput
+	inputs := make([]wallet.TransactionInput, 0, len(contract.DisputeResolution.Payout.Inputs))
 	for _, o := range contract.DisputeResolution.Payout.Inputs {
 		decodedHash, err := hex.DecodeString(o.Hash)
 		if err != nil {
 			return err
 		}
-		input := wallet.TransactionInput{
+
+		inputs = append(inputs, wallet.TransactionInput{
 			OutpointHash:  decodedHash,
 			OutpointIndex: o.Index,
 			Value:         int64(o.Value),
-		}
-		inputs = append(inputs, input)
+		})
 	}
 
 	if len(inputs) == 0 {
@@ -1048,13 +1046,12 @@ func (n *OpenBazaarNode) ReleaseFunds(contract *pb.RicardianContract, records []
 		return err
 	}
 
-	var moderatorSigs []wallet.Signature
-	for _, sig := range contract.DisputeResolution.Payout.Sigs {
-		s := wallet.Signature{
+	moderatorSigs := make([]wallet.Signature, len(contract.DisputeResolution.Payout.Sigs))
+	for i, sig := range contract.DisputeResolution.Payout.Sigs {
+		moderatorSigs[i] = wallet.Signature{
 			Signature:  sig.Signature,
 			InputIndex: sig.InputIndex,
 		}
-		moderatorSigs = append(moderatorSigs, s)
 	}
 
 	accept := new(pb.DisputeAcceptance)

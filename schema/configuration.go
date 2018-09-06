@@ -119,13 +119,13 @@ func GetAPIConfig(cfgBytes []byte) (*APIConfig, error) {
 	if !ok {
 		return nil, MalformedConfigError
 	}
-	var allowedIPstrings []string
-	for _, ip := range allowedIPsIface {
+	allowedIPstrings := make([]string, 0, len(allowedIPsIface))
+	for i, ip := range allowedIPsIface {
 		ipStr, ok := ip.(string)
 		if !ok {
 			return nil, MalformedConfigError
 		}
-		allowedIPstrings = append(allowedIPstrings, ipStr)
+		allowedIPstrings[i] = ipStr
 	}
 
 	username, ok := api["Username"]
@@ -454,28 +454,28 @@ func GetDataSharing(cfgBytes []byte) (*DataSharing, error) {
 func GetTestnetBootstrapAddrs(cfgBytes []byte) ([]string, error) {
 	var cfgIface interface{}
 	json.Unmarshal(cfgBytes, &cfgIface)
-	var addrs []string
 
 	cfg, ok := cfgIface.(map[string]interface{})
 	if !ok {
-		return addrs, MalformedConfigError
+		return nil, MalformedConfigError
 	}
 
 	bootstrap, ok := cfg["Bootstrap-testnet"]
 	if !ok {
-		return addrs, MalformedConfigError
+		return nil, MalformedConfigError
 	}
 	addrList, ok := bootstrap.([]interface{})
 	if !ok {
-		return addrs, MalformedConfigError
+		return nil, MalformedConfigError
 	}
 
-	for _, addr := range addrList {
+	addrs := make([]string, 0, len(addrList))
+	for i, addr := range addrList {
 		addrStr, ok := addr.(string)
 		if !ok {
 			return addrs, MalformedConfigError
 		}
-		addrs = append(addrs, addrStr)
+		addrs[i] = addrStr
 	}
 
 	return addrs, nil

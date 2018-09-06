@@ -210,9 +210,9 @@ func (n *OpenBazaarNode) ValidateOrderFulfillment(fulfillment *pb.OrderFulfillme
 		return false
 	}
 
-	var listingSlugs []string
-	for _, listing := range contract.VendorListings {
-		listingSlugs = append(listingSlugs, listing.Slug)
+	listingSlugs := make([]string, len(contract.VendorListings))
+	for i, listing := range contract.VendorListings {
+		listingSlugs[i] = listing.Slug
 	}
 	if !slugExists(fulfillment.Slug, listingSlugs) {
 		return errors.New("Slug in rating signature does not exist in order")

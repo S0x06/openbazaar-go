@@ -488,7 +488,7 @@ func (i *jsonAPIHandler) POSTImage(w http.ResponseWriter, r *http.Request) {
 		Filename string           `json:"filename"`
 		Hashes   pb.Profile_Image `json:"hashes"`
 	}
-	var retData []retImage
+	retData := make([]retImage, 0, len(images))
 	for _, img := range images {
 		hashes, err := i.node.SetProductImages(img.Image, img.Filename)
 		if err != nil {
@@ -615,9 +615,9 @@ func (i *jsonAPIHandler) GETStatus(w http.ResponseWriter, r *http.Request) {
 
 func (i *jsonAPIHandler) GETPeers(w http.ResponseWriter, r *http.Request) {
 	peers := ipfs.ConnectedPeers(i.node.IpfsNode)
-	var ret []string
-	for _, p := range peers {
-		ret = append(ret, p.Pretty())
+	ret := make([]string, len(peers))
+	for i, p := range peers {
+		ret[i] = p.Pretty()
 	}
 	peerJson, err := json.MarshalIndent(ret, "", "    ")
 	if err != nil {

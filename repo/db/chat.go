@@ -61,12 +61,11 @@ func (c *ChatDB) Put(messageId string, peerId string, subject string, message st
 func (c *ChatDB) GetConversations() []repo.ChatConversation {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	var ret []repo.ChatConversation
 
 	stm := "select distinct peerID from chat where subject='' order by timestamp desc;"
 	rows, err := c.db.Query(stm)
 	if err != nil {
-		return ret
+		return nil
 	}
 	var ids []string
 	for rows.Next() {
@@ -78,7 +77,9 @@ func (c *ChatDB) GetConversations() []repo.ChatConversation {
 
 	}
 	defer rows.Close()
-	for _, peerId := range ids {
+
+	ret := make([]repo.ChatConversation, len(ids))
+	for i, peerId := range ids {
 		stm := "select Count(*) from chat where peerID='" + peerId + "' and read=0 and subject='' and outgoing=0;"
 		row := c.db.QueryRow(stm)
 		var count int
@@ -93,15 +94,13 @@ func (c *ChatDB) GetConversations() []repo.ChatConversation {
 		if outInt > 0 {
 			outgoing = true
 		}
-		timestamp := time.Unix(int64(ts), 0)
-		convo := repo.ChatConversation{
+		ret[i] = repo.ChatConversation{
 			PeerId:    peerId,
 			Unread:    count,
 			Last:      m,
-			Timestamp: timestamp,
+			Timestamp: time.Unix(int64(ts), 0),
 			Outgoing:  outgoing,
 		}
-		ret = append(ret, convo)
 	}
 	return ret
 }
